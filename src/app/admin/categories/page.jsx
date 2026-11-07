@@ -3,48 +3,33 @@
 import AdminLayout from "@/app/AdminLayout";
 import ButtonAdd from "@/components/ButtonAdd";
 import ConfirmModal from "@/components/ConfirmModal";
-import StatCard from "@/components/StatCard";
+import { useFetchCatgories } from "@/hooks/category/useFetchCategories";
 import { Pencil, Trash } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
 function Page() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { categories, loadingCategoriesg, errorCategories, fetchCategories } =
+    useFetchCatgories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const respose = await fetch("/api/categories");
-        const result = await respose.json();
-
-        if (respose.ok && result.success) {
-          setCategories(result.data || []);
-          setError("");
-        } else {
-          setError(result.message || "Gagal mengambil data dari sever");
-        }
-      } catch (error) {
-        setError("Terjadi Kesalan Pada Jaringan");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCategories();
   }, []);
 
   const handleDelete = (category) => {
     setSelectedCategory(category);
+    setDeleteError("");
     setIsModalOpen(true);
   };
 
   const executeDelete = async () => {
     if (!selectedCategory) return;
     setIsDeleting(true);
+    setDeleteError("");
 
     try {
       const response = await fetch(
@@ -53,16 +38,18 @@ function Page() {
           method: "DELETE",
         },
       );
-      if (response.ok) {
-        setCategories(
-          categories.filter(
-            (cat) => cat.category_id !== selectedCategory.category_id,
-          ),
-        );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        await fetchCategories();
         setIsModalOpen(false);
+        setSelectedCategory(null);
+      } else {
+        setDeleteError(result.message || "Gagal menghapus kategori");
       }
     } catch (error) {
-      setError("Gagal Menghapus Kategory");
+      setDeleteError("Terjadi kesalahan pada jaringan");
     } finally {
       setIsDeleting(false);
     }
@@ -70,6 +57,12 @@ function Page() {
   return (
     <AdminLayout>
       <div className="flex flex-col gap-10">
+        {errorCategories && (
+          <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg text-sm font-medium">
+            {errorCategories}
+          </div>
+        )}
+
         <div className="flex justify-between">
           <div className="text-white">Total Kategori: {categories.length}</div>
           <div className="flex gap-4 items-center">
@@ -96,7 +89,7 @@ function Page() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loadingCategoriesg ? (
                 [...Array(3)].map((_, i) => (
                   <tr key={i} className="animate-pulse">
                     <td className="px-4 py-4">
@@ -163,10 +156,15 @@ function Page() {
       </div>
       <ConfirmModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setDeleteError("");
+          setSelectedCategory(null);
+        }}
         onConfirm={executeDelete}
         title="Hapus Kategori"
         message={`Apakah Anda yakin ingin menghapus kategori "${selectedCategory?.category_name}"? Tindakan ini tidak dapat dibatalkan.`}
+        error={deleteError}
         confirmText="Ya, Hapus"
         confirmColor="bg-red-600 hover:bg-red-700 text-white"
         isLoading={isDeleting}

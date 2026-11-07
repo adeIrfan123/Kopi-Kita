@@ -8,6 +8,7 @@ function ConfirmButton({
   labelColor2,
   bgColor2,
   onCancel,
+  onSubmit,
   isLoading,
 }) {
   return (
@@ -16,14 +17,16 @@ function ConfirmButton({
         <button
           type="button"
           onClick={onCancel}
-          className={`${bgColor1} cursor-pointer px-3 py-2 rounded-lg ${labelColor1} font-bold`}
+          disabled={isLoading}
+          className={`${bgColor1} cursor-pointer px-3 py-2 rounded-lg ${labelColor1} font-bold disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {label1}
         </button>
         <button
-          type="submit"
+          type="button"
+          onClick={onSubmit}
           disabled={isLoading}
-          className={`${bgColor2} cursor-pointer px-3 py-2 rounded-lg ${labelColor2} font-bold`}
+          className={`${bgColor2} cursor-pointer px-3 py-2 rounded-lg ${labelColor2} font-bold disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {isLoading ? "Menyimpan..." : label2}
         </button>

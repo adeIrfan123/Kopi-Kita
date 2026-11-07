@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const snapshot = await getDocs(collection(db, "categories"));
+    const categoriesRef = collection(db, "categories");
+    const snapshot = await getDocs(categoriesRef);
 
     const categories = snapshot.docs.map((doc) => ({
       category_id: doc.id,
