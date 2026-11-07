@@ -1,5 +1,14 @@
 import { db } from "@/lib/firebase";
-import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -62,7 +71,7 @@ export async function PUT(request, { params }) {
     );
   } catch (error) {
     return NextResponse.json(
-      { status: false, message: "Gagal memperbarui kategori" },
+      { success: false, message: "Gagal memperbarui kategori" },
       { status: 500 },
     );
   }
@@ -72,11 +81,23 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
 
-    const docRef = doc(db, "categories", id);
-    await deleteDoc(docRef);
+    const productsRef = collection(db, "products");
+    const q = query(productsRef, where("category_id", "==", id));
+    const querySnapshot = await getDocs(q);
+
+    const deletePromise = querySnapshot.docs.map((productDoc) =>
+      deleteDoc(doc(db, "products", productDoc.id)),
+    );
+    await Promise.all(deletePromise);
+
+    const categoryRef = doc(db, "categories", id);
+    await deleteDoc(categoryRef);
 
     return NextResponse.json(
-      { success: true, message: "Kategori berhasil dihapus" },
+      {
+        success: true,
+        message: `Kategori beserta ${querySnapshot.size} produk di dalamnya berhasil dihapus`,
+      },
       { status: 200 },
     );
   } catch (error) {
