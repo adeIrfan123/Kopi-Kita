@@ -1,6 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
+  allowedDevOrigins: ["monitor-spearhead-handcuff.ngrok-free.dev"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname:
+          "kopi-kita.ab279f80ac155ac28a96d2a9d8b37f96.r2.cloudflarestorage.com",
+        pathname: "/kopi-kita/**",
+      },
+    ],
+  },
   reactCompiler: true,
   async headers() {
     return [
